@@ -4,23 +4,29 @@ import com.waty.calculate.Edge;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 
-public class TextNoBuffer extends Writer {
+public class TextNoBuffer implements IWriter {
 
-    private FileWriter fileWriter;
+    Writer fw;
 
     @Override
     public void open(String path) throws IOException {
-        fileWriter = new FileWriter(path);
+        fw = new FileWriter(path);
+    }
+
+    @Override
+    public void writeLevel(int lvl) throws IOException {
+        fw.write(lvl + System.lineSeparator());
     }
 
     @Override
     public void appendEdge(Edge e) throws IOException {
-        fileWriter.write(e.toString() + "\n");
+        fw.write(e.toString() + System.lineSeparator());
     }
 
     @Override
     public void close() throws IOException {
-        fileWriter.close();
+        fw.close();
     }
 }
