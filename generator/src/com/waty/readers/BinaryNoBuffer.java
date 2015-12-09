@@ -1,4 +1,4 @@
-package readers;
+package com.waty.readers;
 
 import com.waty.calculate.Edge;
 import javafx.scene.paint.Color;

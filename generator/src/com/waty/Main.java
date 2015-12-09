@@ -4,6 +4,7 @@ import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
 import com.waty.writers.IWriter;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -26,6 +27,8 @@ public class Main {
         System.out.println("(4) Binary, buffered\n");
 
         int idx = s.nextInt() - 1;
+
+        System.out.println("Writing to file " + new File(PATH).getAbsolutePath());
         try (final IWriter writer = IWriter.writers[idx]) {
             writer.open(PATH);
             writer.writeLevel(lvl);

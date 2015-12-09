@@ -1,11 +1,11 @@
-package readers;
+package com.waty.readers;
 
 import com.waty.calculate.Edge;
 
 import java.io.IOException;
 
-public interface IReader {
-    public static IReader[] readers = new IReader[]{new TextNoBuffer(), new BinaryNoBuffer(), new TextBuffered(), new BinaryBuffered()};
+public interface IReader extends AutoCloseable {
+    IReader[] readers = new IReader[]{new TextNoBuffer(), new BinaryNoBuffer(), new TextBuffered(), new BinaryBuffered()};
     void open(String path) throws IOException;
 
     int readLevel() throws IOException;

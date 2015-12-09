@@ -2,16 +2,17 @@ package com.waty.writers;
 
 import com.waty.calculate.Edge;
 
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 public class BinaryNoBuffer implements IWriter {
-    ObjectOutputStream oos;
+    DataOutputStream oos;
 
     @Override
     public void open(String path) throws IOException {
-        oos = new ObjectOutputStream(new FileOutputStream(path));
+        oos = new DataOutputStream(new FileOutputStream(path));
     }
 
     @Override

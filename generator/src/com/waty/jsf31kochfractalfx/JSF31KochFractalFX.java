@@ -2,9 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package jsf31kochfractalfx;
+package com.waty.jsf31kochfractalfx;
 
 import com.waty.calculate.Edge;
+import com.waty.calculate.KochFractal;
+import com.waty.readers.IReader;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -18,7 +20,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import readers.IReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,26 +121,20 @@ public class JSF31KochFractalFX extends Application {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Please select the file");
         File file = fileChooser.showOpenDialog(primaryStage);
-        IReader reader = IReader.readers[1];
-        try {
+
+        try (IReader reader = IReader.readers[1]) {
             reader.open(file.getPath());
             currentLevel = reader.readLevel();
             labelLevel.setText(currentLevel + "");
-            while (true) {
-                drawEdge(reader.readEdge(), true);
-            }
+
+            for (int i = 0; i < getEdgesCount(); i++) drawEdge(reader.readEdge(), false);
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     public void clearKochPanel() {
+       // System.out.println("Clearing panel");
         GraphicsContext gc = kochPanel.getGraphicsContext2D();
         gc.clearRect(0.0, 0.0, kpWidth, kpHeight);
         gc.setFill(Color.BLACK);
@@ -167,6 +162,7 @@ public class JSF31KochFractalFX extends Application {
         }
 
         // Draw line
+        //System.out.println(String.format("drawing line %s %s %s %s", e1.X1, e1.Y1, e1.X2, e1.Y2));
         gc.strokeLine(e1.X1, e1.Y1, e1.X2, e1.Y2);
     }
 
@@ -184,5 +180,11 @@ public class JSF31KochFractalFX extends Application {
                 e.X2 * zoom + zoomTranslateX,
                 e.Y2 * zoom + zoomTranslateY,
                 e.color);
+    }
+
+    public int getEdgesCount() {
+        KochFractal kf = new KochFractal();
+        kf.setLevel(currentLevel);
+        return kf.getNrOfEdges();
     }
 }

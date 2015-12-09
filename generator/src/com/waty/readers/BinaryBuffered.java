@@ -1,4 +1,4 @@
-package readers;
+package com.waty.readers;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;

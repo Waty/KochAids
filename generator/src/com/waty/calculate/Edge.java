@@ -26,4 +26,9 @@ public class Edge {
     public String toString() {
         return X1 + " " + Y1 + " " + X2 + " " + Y2 + " " + color.getRed() + " " + color.getGreen() + " " + color.getBlue();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Edge && o.toString().equals(this.toString());
+    }
 }

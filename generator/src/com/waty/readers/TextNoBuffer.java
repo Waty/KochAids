@@ -1,4 +1,4 @@
-package readers;
+package com.waty.readers;
 
 import com.waty.calculate.Edge;
 import javafx.scene.paint.Color;
@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class TextNoBuffer implements IReader {
-    private Scanner scanner;
+    protected Scanner scanner;
 
     @Override
     public void open(String path) throws IOException {
