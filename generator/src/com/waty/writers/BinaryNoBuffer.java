@@ -16,7 +16,7 @@ public class BinaryNoBuffer implements IWriter {
     }
 
     @Override
-    public void writeLevel(int lvl) throws IOException {
+    public void setLevel(int lvl) throws IOException {
         oos.writeInt(lvl);
     }
 

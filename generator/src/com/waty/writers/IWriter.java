@@ -9,7 +9,7 @@ public interface IWriter extends AutoCloseable {
 
     void open(String path) throws IOException;
 
-    void writeLevel(int lvl) throws IOException;
+    void setLevel(int lvl) throws IOException;
 
     void appendEdge(Edge e) throws IOException;
 

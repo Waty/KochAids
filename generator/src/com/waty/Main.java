@@ -31,7 +31,7 @@ public class Main {
         System.out.println("Writing to file " + new File(PATH).getAbsolutePath());
         try (final IWriter writer = IWriter.writers[idx]) {
             writer.open(PATH);
-            writer.writeLevel(lvl);
+            writer.setLevel(lvl);
             kf.addObserver((observable, o) -> {
                 try {
                     writer.appendEdge((Edge) o);

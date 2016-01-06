@@ -16,7 +16,7 @@ public class TextNoBuffer implements IWriter {
     }
 
     @Override
-    public void writeLevel(int lvl) throws IOException {
+    public void setLevel(int lvl) throws IOException {
         fw.write(lvl + System.lineSeparator());
     }
 

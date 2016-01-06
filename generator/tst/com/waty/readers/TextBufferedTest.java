@@ -25,7 +25,7 @@ public class TextBufferedTest {
         for (int i = 0; i < IWriter.writers.length; ++i) {
             try (IWriter writer = IWriter.writers[i]) {
                 writer.open("test");
-                writer.writeLevel(5);
+                writer.setLevel(5);
                 for (Edge edge : edges) writer.appendEdge(edge);
             } catch (IOException e) {
                 e.printStackTrace();
