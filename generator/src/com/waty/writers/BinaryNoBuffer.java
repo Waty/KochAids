@@ -8,11 +8,11 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 public class BinaryNoBuffer implements IWriter {
-    DataOutputStream oos;
+    ObjectOutputStream oos;
 
     @Override
     public void open(String path) throws IOException {
-        oos = new DataOutputStream(new FileOutputStream(path));
+        oos = new ObjectOutputStream(new FileOutputStream(path));
     }
 
     @Override
