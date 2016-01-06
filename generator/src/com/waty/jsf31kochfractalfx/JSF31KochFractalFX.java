@@ -134,7 +134,7 @@ public class JSF31KochFractalFX extends Application {
     }
 
     public void clearKochPanel() {
-       // System.out.println("Clearing panel");
+        // System.out.println("Clearing panel");
         GraphicsContext gc = kochPanel.getGraphicsContext2D();
         gc.clearRect(0.0, 0.0, kpWidth, kpHeight);
         gc.setFill(Color.BLACK);
