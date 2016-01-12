@@ -13,11 +13,14 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class TextBufferedTest {
+
+    private static final int LEVEL = 10;
+
     @Test
     public void test() {
         List<Edge> edges = new ArrayList<>();
         KochFractal kf = new KochFractal();
-        kf.setLevel(5);
+        kf.setLevel(LEVEL);
         kf.addObserver((observable1, o1) -> edges.add((Edge) o1));
         kf.generateRightEdge();
         kf.generateLeftEdge();
@@ -28,7 +31,7 @@ public class TextBufferedTest {
             try (IWriter writer = IWriter.writers[i]) {
                 ts.setBegin("writing using " + writer);
                 writer.open("test");
-                writer.setLevel(5);
+                writer.setLevel(LEVEL);
                 for (Edge edge : edges) writer.appendEdge(edge);
                 ts.setEnd("writing using " + writer);
             } catch (IOException e) {
@@ -38,7 +41,7 @@ public class TextBufferedTest {
             try (IReader reader = IReader.readers[i]) {
                 ts.setBegin("reading using " + reader);
                 reader.open("test");
-                assertEquals(5, reader.readLevel());
+                assertEquals(LEVEL, reader.readLevel());
                 for (Edge edge : edges) assertEquals(edge, reader.readEdge());
                 ts.setEnd("reading using " + reader);
             } catch (IOException e) {
