@@ -9,6 +9,8 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class BinaryMemoryMapped implements IWriter {
+    static final int WRITE_SIZE = Double.BYTES * 7;
+
     public long NUMBER_OF_BYTES;
     private RandomAccessFile memoryMappedFile;
     private MappedByteBuffer out;
@@ -23,12 +25,12 @@ public class BinaryMemoryMapped implements IWriter {
         KochFractal kf = new KochFractal();
         kf.setLevel(lvl);
 
-        NUMBER_OF_BYTES = 1 + (kf.getNrOfEdges() * (7 * Double.BYTES));
+        NUMBER_OF_BYTES = Integer.BYTES + (kf.getNrOfEdges() * WRITE_SIZE);
 
         //Mapping a file into memory
         FileChannel fc = memoryMappedFile.getChannel();
         out = fc.map(FileChannel.MapMode.READ_WRITE, 0, NUMBER_OF_BYTES);
-        out.put((byte) lvl);
+        out.putInt(lvl);
     }
 
     @Override

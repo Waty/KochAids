@@ -20,7 +20,7 @@ public class BinaryMemoryMapped implements IReader {
 
     @Override
     public int readLevel() throws IOException {
-        return buffer.get();
+        return buffer.getInt();
     }
 
     @Override
