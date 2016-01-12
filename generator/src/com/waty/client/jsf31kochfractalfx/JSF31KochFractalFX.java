@@ -2,17 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.waty.jsf31kochfractalfx;
+package com.waty.client.jsf31kochfractalfx;
 
-import com.waty.Calculator;
-import com.waty.calculate.Edge;
-import com.waty.calculate.KochFractal;
-import com.waty.readers.BinaryBuffered;
-import com.waty.readers.BinaryMemoryMapped;
-import com.waty.readers.IReader;
-import com.waty.readers.TextBuffered;
+import com.waty.server.calculate.Edge;
+import com.waty.server.calculate.KochFractal;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
@@ -23,14 +17,12 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.File;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.file.*;
-
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import java.net.Socket;
 
 /**
  * @author Nico Kuijpers
@@ -50,7 +42,9 @@ public class JSF31KochFractalFX extends Application {
     // Koch panel and its size
     private Canvas kochPanel;
     private Stage primaryStage;
-    private Thread fileWatcherThread;
+    private Socket socket;
+    private DataOutputStream outputStream;
+    private DataInputStream inputStream;
 
     /**
      * The main() method is ignored in correctly deployed JavaFX application.
@@ -103,11 +97,10 @@ public class JSF31KochFractalFX extends Application {
         labelLevel = new Label("Level: " + currentLevel);
         grid.add(labelLevel, 0, 6);
 
-        // Button to fit Koch fractal in Koch panel
-        Button bLoadFile = new Button();
-        bLoadFile.setText("Load file");
-        bLoadFile.setOnAction(this::bLoadFileClicked);
-        grid.add(bLoadFile, 14, 6);
+        Button bGetAllEdges = new Button();
+        bGetAllEdges.setText("GetAllEdges");
+        bGetAllEdges.setOnAction(this::bGetAllEdgesClicked);
+        grid.add(bGetAllEdges, 14, 6);
 
         // Create Koch manager and set initial level
         resetZoom();
@@ -124,87 +117,31 @@ public class JSF31KochFractalFX extends Application {
 
         clearKochPanel();
 
+        initTcpConnection();
+    }
 
-        WatchService watcher = FileSystems.getDefault().newWatchService();
-        Path dir = Paths.get(Calculator.PATH);
-        dir.register(watcher, ENTRY_CREATE);
-
-        fileWatcherThread = new Thread(() -> {
-            while (true) {
-                WatchKey key;
-                try {
-                    // wait for a key to be available
-                    key = watcher.take();
-                } catch (InterruptedException ex) {
-                    return;
-                }
-
-                for (WatchEvent<?> event : key.pollEvents()) {
-                    // get event type
-                    WatchEvent.Kind<?> kind = event.kind();
-
-                    // get file name
-                    @SuppressWarnings("unchecked")
-                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
-
-                    String path = Paths.get(Calculator.PATH, ev.context().toString()).toString();
-                    System.out.println(kind.name() + ": " + path);
-                    if (kind == ENTRY_CREATE) {
-                        Platform.runLater(() -> parseFile(path));
-                    }
-                }
-
-                // IMPORTANT: The key must be reset after processed
-                boolean valid = key.reset();
-                if (!valid) {
-                    break;
-                }
-            }
-        });
-        fileWatcherThread.start();
+    private void initTcpConnection() throws IOException {
+        socket = new Socket("localhost", 1337);
+        outputStream = new DataOutputStream(socket.getOutputStream());
+        inputStream = new DataInputStream(socket.getInputStream());
     }
 
     @Override
     public void stop() throws Exception {
-        super.stop();
-        fileWatcherThread.interrupt();
+        socket.close();
     }
 
-    IReader getReader(String path) {
-        if (path.endsWith(".txt")) return new TextBuffered();
-        else if (path.endsWith(".bin")) return new BinaryBuffered();
-        return new BinaryMemoryMapped();
-    }
-
-    private void parseFile(String path) {
-        clearKochPanel();
-        new Thread(() -> {
-            try (IReader reader = getReader(path)) {
-                reader.open(path);
-                currentLevel = reader.readLevel();
-                Platform.runLater(() -> labelLevel.setText(currentLevel + ""));
-
-                for (int i = 0; i < getEdgesCount(); i++) {
-                    Edge edge = reader.readEdge();
-                    Platform.runLater(() -> drawEdge(edge));
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
+    private void bGetAllEdgesClicked(ActionEvent actionEvent) {
+        try {
+            outputStream.writeUTF("GetAllEdges");
+            outputStream.writeInt(currentLevel);
+            int responseCount = inputStream.readInt();
+            for (int i = 0; i < responseCount; i++) {
+                drawEdge(Edge.parse(inputStream));
             }
-
-            //noinspection ResultOfMethodCallIgnored
-            new File(path).delete();
-        }).start();
-
-    }
-
-    private void bLoadFileClicked(ActionEvent actionEvent) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Please select the file");
-        File file = fileChooser.showOpenDialog(primaryStage);
-
-        parseFile(file.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void clearKochPanel() {
