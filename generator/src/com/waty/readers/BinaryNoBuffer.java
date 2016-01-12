@@ -31,7 +31,7 @@ public class BinaryNoBuffer implements IReader {
         double green = ois.readDouble();
         double blue = ois.readDouble();
 
-        return new Edge(x1, y1, x2, y2, new Color(red, green, blue, 0));
+        return new Edge(x1, y1, x2, y2, new Color(red, green, blue, 1));
     }
 
     @Override

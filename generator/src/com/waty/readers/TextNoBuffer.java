@@ -33,7 +33,7 @@ public class TextNoBuffer implements IReader {
         double green = Double.parseDouble(parts[5]);
         double blue = Double.parseDouble(parts[6]);
 
-        return new Edge(x1, y1, x2, y2, new Color(red, green, blue, 0));
+        return new Edge(x1, y1, x2, y2, new Color(red, green, blue, 1));
     }
 
     @Override
