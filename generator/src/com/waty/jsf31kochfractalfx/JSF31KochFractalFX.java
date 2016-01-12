@@ -4,10 +4,12 @@
  */
 package com.waty.jsf31kochfractalfx;
 
+import com.waty.Main;
 import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
 import com.waty.readers.IReader;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
@@ -23,6 +25,10 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.*;
+
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 /**
  * @author Nico Kuijpers
@@ -56,7 +62,7 @@ public class JSF31KochFractalFX extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) throws IOException {
         this.primaryStage = primaryStage;
         // Define grid pane
         GridPane grid;
@@ -115,6 +121,55 @@ public class JSF31KochFractalFX extends Application {
 
         clearKochPanel();
 
+
+        WatchService watcher = FileSystems.getDefault().newWatchService();
+        Path dir = Paths.get(new File(Main.PATH).getParentFile().getName());
+        dir.register(watcher, ENTRY_CREATE);
+
+        new Thread(() -> {
+            while (true) {
+                WatchKey key;
+                try {
+                    // wait for a key to be available
+                    key = watcher.take();
+                } catch (InterruptedException ex) {
+                    return;
+                }
+
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    // get event type
+                    WatchEvent.Kind<?> kind = event.kind();
+
+                    // get file name
+                    @SuppressWarnings("unchecked")
+                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                    Path fileName = ev.context();
+
+                    System.out.println(kind.name() + ": " + fileName);
+                    if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
+                        Platform.runLater(() -> parseFile(fileName.toAbsolutePath().toString()));
+                    }
+                }
+
+                // IMPORTANT: The key must be reset after processed
+                boolean valid = key.reset();
+                if (!valid) {
+                    break;
+                }
+            }
+        }).start();
+    }
+
+    private void parseFile(String path) {
+        try (IReader reader = IReader.readers[1]) {
+            reader.open(path);
+            currentLevel = reader.readLevel();
+            labelLevel.setText(currentLevel + "");
+
+            for (int i = 0; i < getEdgesCount(); i++) drawEdge(reader.readEdge(), false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void bLoadFileClicked(ActionEvent actionEvent) {

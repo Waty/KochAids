@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 public class Main {
 
-    private static final String PATH = "out/test.txt";
+    public static final String PATH = "out/test.txt";
 
     public static void main(String[] args) {
         System.out.println("What lvl needs to be generated?\n");

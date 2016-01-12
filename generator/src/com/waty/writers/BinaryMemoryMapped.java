@@ -23,7 +23,7 @@ public class BinaryMemoryMapped implements IWriter {
         KochFractal kf = new KochFractal();
         kf.setLevel(lvl);
 
-        NUMBER_OF_BYTES = 1 + (kf.getNrOfEdges() * (7 * 8));
+        NUMBER_OF_BYTES = 1 + (kf.getNrOfEdges() * (7 * Double.BYTES));
 
         //Mapping a file into memory
         FileChannel fc = memoryMappedFile.getChannel();
