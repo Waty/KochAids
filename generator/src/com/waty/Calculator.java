@@ -8,9 +8,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
-public class Main {
+public class Calculator {
 
-    public static final String PATH = "out/test.txt";
+    public static final String PATH = "C:\\KochData\\";
+    private static final String FILE_NAME = "data";
+
+    public static String getPath(int idx) {
+        String extension;
+        if (idx == 0 || idx == 2) extension = "txt";
+        else if (idx == 1 || idx == 3) extension = "bin";
+        else extension = "idk";
+
+        return new File(PATH + FILE_NAME + "." + extension).getAbsolutePath();
+    }
 
     public static void main(String[] args) {
         System.out.println("What lvl needs to be generated?\n");
@@ -21,16 +31,17 @@ public class Main {
 
         System.out.println();
         System.out.println("Which writer should be used?");
-        System.out.println("(1) Text, no buffer");
-        System.out.println("(2) Binary, no buffer");
-        System.out.println("(3) Text, buffered");
-        System.out.println("(4) Binary, buffered\n");
+        for (int i = 0; i < IWriter.writers.length; i++) {
+            System.out.printf("(%d) %s%n", i + 1, IWriter.writers[i].toString());
+        }
+        System.out.println();
 
         int idx = s.nextInt() - 1;
 
-        System.out.println("Writing to file " + new File(PATH).getAbsolutePath());
+        String absPath = getPath(idx);
+        System.out.println("Writing to file " + absPath);
         try (final IWriter writer = IWriter.writers[idx]) {
-            writer.open(PATH);
+            writer.open(absPath);
             writer.setLevel(lvl);
             kf.addObserver((observable, o) -> {
                 try {
@@ -51,4 +62,5 @@ public class Main {
 
         System.out.println("Finished generating edges");
     }
+
 }

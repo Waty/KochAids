@@ -4,10 +4,12 @@
  */
 package com.waty.jsf31kochfractalfx;
 
-import com.waty.Main;
+import com.waty.Calculator;
 import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
+import com.waty.readers.BinaryBuffered;
 import com.waty.readers.IReader;
+import com.waty.readers.TextBuffered;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -123,7 +125,7 @@ public class JSF31KochFractalFX extends Application {
 
 
         WatchService watcher = FileSystems.getDefault().newWatchService();
-        Path dir = Paths.get(new File(Main.PATH).getParentFile().getName());
+        Path dir = Paths.get(Calculator.PATH);
         dir.register(watcher, ENTRY_CREATE);
 
         new Thread(() -> {
@@ -145,9 +147,17 @@ public class JSF31KochFractalFX extends Application {
                     WatchEvent<Path> ev = (WatchEvent<Path>) event;
                     Path fileName = ev.context();
 
+
                     System.out.println(kind.name() + ": " + fileName);
                     if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
-                        Platform.runLater(() -> parseFile(fileName.toAbsolutePath().toString()));
+                        System.out.println("Waiting a sec before reading the new file");
+                        Path path = Paths.get(Calculator.PATH, fileName.toString());
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Platform.runLater(() -> parseFile(path.toString()));
                     }
                 }
 
@@ -160,13 +170,22 @@ public class JSF31KochFractalFX extends Application {
         }).start();
     }
 
+    IReader getReader(String path) {
+        if (path.endsWith(".txt")) return new TextBuffered();
+        else if (path.endsWith(".bin")) return new BinaryBuffered();
+        return null;
+    }
+
     private void parseFile(String path) {
-        try (IReader reader = IReader.readers[1]) {
+        try (IReader reader = getReader(path)) {
             reader.open(path);
             currentLevel = reader.readLevel();
             labelLevel.setText(currentLevel + "");
 
-            for (int i = 0; i < getEdgesCount(); i++) drawEdge(reader.readEdge(), false);
+            for (int i = 0; i < getEdgesCount(); i++) drawEdge(reader.readEdge());
+
+            //noinspection ResultOfMethodCallIgnored
+            new File(path).delete();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -182,7 +201,7 @@ public class JSF31KochFractalFX extends Application {
             currentLevel = reader.readLevel();
             labelLevel.setText(currentLevel + "");
 
-            for (int i = 0; i < getEdgesCount(); i++) drawEdge(reader.readEdge(), false);
+            for (int i = 0; i < getEdgesCount(); i++) drawEdge(reader.readEdge());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -196,7 +215,7 @@ public class JSF31KochFractalFX extends Application {
         gc.fillRect(0.0, 0.0, kpWidth, kpHeight);
     }
 
-    public void drawEdge(Edge e, boolean useColor) {
+    public void drawEdge(Edge e) {
         // Graphics
         GraphicsContext gc = kochPanel.getGraphicsContext2D();
 
@@ -204,8 +223,9 @@ public class JSF31KochFractalFX extends Application {
         Edge e1 = edgeAfterZoomAndDrag(e);
 
         // Set line color
-        if (useColor) gc.setStroke(e1.color);
-        else gc.setStroke(Color.WHITE);
+        System.out.println(e1.color.toString());
+        gc.setStroke(e1.color);
+        //else gc.setStroke(Color.WHITE);
 
         // Set line width depending on level
         if (currentLevel <= 3) {
