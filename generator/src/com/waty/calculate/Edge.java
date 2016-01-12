@@ -29,6 +29,9 @@ public class Edge {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof Edge && o.toString().equals(this.toString());
+        if (!(o instanceof Edge)) return false;
+
+        Edge e = (Edge) o;
+        return e.toString().equals(this.toString()) && e.color.equals(this.color);
     }
 }
