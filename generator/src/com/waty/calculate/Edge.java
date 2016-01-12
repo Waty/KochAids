@@ -32,6 +32,6 @@ public class Edge {
         if (!(o instanceof Edge)) return false;
 
         Edge e = (Edge) o;
-        return e.toString().equals(this.toString()) && e.color.equals(this.color);
+        return this.X1 == e.X1 && this.X2 == e.X2 && this.Y1 == e.Y1 && this.Y2 == e.Y2 && e.color.equals(this.color);
     }
 }
