@@ -10,11 +10,13 @@ import java.net.Socket;
 import java.util.List;
 
 public class EdgeProtocolServer implements Runnable, AutoCloseable {
+    private static final double kpSize = 500;
     private final Socket socket;
     private final DataOutputStream outputStream;
     private final DataInputStream inputStream;
     private final Thread handler;
-    private double zoom;
+    private double zoom = kpSize; //TODO
+    private int level = 1;
 
     public EdgeProtocolServer(Socket s) throws IOException {
         socket = s;
@@ -53,14 +55,17 @@ public class EdgeProtocolServer implements Runnable, AutoCloseable {
 
     private void ChangeZoomLevel() throws IOException {
         zoom = inputStream.readDouble();
-        GetAllEdges();
+        List<Edge> edges = EdgeFactory.getAll(level);
+        outputStream.writeInt(edges.size());
+        for (Edge edge : edges) applyZoom(edge).write(outputStream);
     }
 
     private void GetEdges() throws IOException {
-        int level = inputStream.readInt();
+        level = inputStream.readInt();
+        outputStream.writeInt(EdgeFactory.getEdgeCount(level));
         EdgeFactory.calculate(level, (o, arg) -> {
             try {
-                ((Edge) arg).write(outputStream);
+                applyZoom((Edge) arg).write(outputStream);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -68,15 +73,25 @@ public class EdgeProtocolServer implements Runnable, AutoCloseable {
     }
 
     private void GetAllEdges() throws IOException {
-        int level = inputStream.readInt();
+        level = inputStream.readInt();
         List<Edge> edges = EdgeFactory.getAll(level);
         outputStream.writeInt(edges.size());
-        for (Edge edge : edges) edge.write(outputStream);
+        for (Edge edge : edges) applyZoom(edge).write(outputStream);
     }
 
     @Override
     public void close() throws IOException {
         handler.interrupt();
         socket.close();
+    }
+
+    private Edge applyZoom(Edge e) {
+        double offset = (kpSize - zoom) / 2;
+        return new Edge(
+                e.X1 * zoom + offset,
+                e.Y1 * zoom + offset,
+                e.X2 * zoom + offset,
+                e.Y2 * zoom + offset,
+                e.color);
     }
 }
