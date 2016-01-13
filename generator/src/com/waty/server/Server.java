@@ -10,13 +10,11 @@ import java.util.Scanner;
 public class Server implements AutoCloseable, Runnable {
 
     private final ServerSocket socket;
-    Thread acceptThread;
     List<EdgeProtocolServer> clients = new ArrayList<>();
 
     public Server() throws IOException {
         socket = new ServerSocket(1337);
-        acceptThread = new Thread(this);
-        acceptThread.start();
+        new Thread(this).start();
     }
 
     public static void main(String[] args) {
@@ -48,7 +46,7 @@ public class Server implements AutoCloseable, Runnable {
 
     @Override
     public void close() throws IOException {
-        acceptThread.interrupt();
+        socket.close();
         for (EdgeProtocolServer client : clients) client.close();
     }
 }
