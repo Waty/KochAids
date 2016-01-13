@@ -11,61 +11,53 @@ import java.util.List;
 
 public class EdgeProtocolServer implements Runnable, AutoCloseable {
     private static final double kpSize = 500;
+
     private final Socket socket;
     private final DataOutputStream outputStream;
     private final DataInputStream inputStream;
-    private final Thread handler;
-    private double zoom = kpSize; //TODO
+
+    private double zoom = kpSize;
     private int level = 1;
+    private double offset;
 
     public EdgeProtocolServer(Socket s) throws IOException {
         socket = s;
         outputStream = new DataOutputStream(s.getOutputStream());
         inputStream = new DataInputStream(s.getInputStream());
-        handler = new Thread(this);
-        handler.start();
+        new Thread(this).start();
     }
 
     @Override
     public void run() {
-        while (true) {
-            try {
-                String msg = inputStream.readUTF();
-                switch (msg) {
-                    case "GetAllEdges":
-                        GetAllEdges();
-                        break;
+        while (true) try {
+            switch (inputStream.readUTF()) {
+                case "GetAllEdges":
+                    level = inputStream.readInt();
+                    GetAllEdges();
+                    break;
 
-                    case "GetEdges":
-                        GetEdges();
-                        break;
+                case "GetEdges":
+                    level = inputStream.readInt();
+                    GetEdges();
+                    break;
 
-                    case "ChangeZoomLevel":
-                        ChangeZoomLevel();
-                        break;
-                }
-
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                break;
+                case "ChangeZoomLevel":
+                    zoom = inputStream.readDouble();
+                    offset = (kpSize - zoom) / 2;
+                    GetEdges();
+                    break;
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            break;
         }
     }
 
-    private void ChangeZoomLevel() throws IOException {
-        zoom = inputStream.readDouble();
-        List<Edge> edges = EdgeFactory.getAll(level);
-        outputStream.writeInt(edges.size());
-        for (Edge edge : edges) applyZoom(edge).write(outputStream);
-    }
-
     private void GetEdges() throws IOException {
-        level = inputStream.readInt();
         outputStream.writeInt(EdgeFactory.getEdgeCount(level));
-        EdgeFactory.calculate(level, (o, arg) -> {
+        EdgeFactory.calculate(level, (o, edge) -> {
             try {
-                applyZoom((Edge) arg).write(outputStream);
+                applyZoom((Edge) edge).write(outputStream);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -73,25 +65,22 @@ public class EdgeProtocolServer implements Runnable, AutoCloseable {
     }
 
     private void GetAllEdges() throws IOException {
-        level = inputStream.readInt();
         List<Edge> edges = EdgeFactory.getAll(level);
         outputStream.writeInt(edges.size());
         for (Edge edge : edges) applyZoom(edge).write(outputStream);
     }
 
-    @Override
-    public void close() throws IOException {
-        handler.interrupt();
-        socket.close();
+    private Edge applyZoom(Edge e) {
+        return new Edge(
+                (e.X1 * zoom) + offset,
+                (e.Y1 * zoom) + offset,
+                (e.X2 * zoom) + offset,
+                (e.Y2 * zoom) + offset,
+                e.color);
     }
 
-    private Edge applyZoom(Edge e) {
-        double offset = (kpSize - zoom) / 2;
-        return new Edge(
-                e.X1 * zoom + offset,
-                e.Y1 * zoom + offset,
-                e.X2 * zoom + offset,
-                e.Y2 * zoom + offset,
-                e.color);
+    @Override
+    public void close() throws IOException {
+        socket.close();
     }
 }
