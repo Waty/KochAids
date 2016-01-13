@@ -1,0 +1,8 @@
+Request:  UTF8("GetAllEdges") int(level)
+Response: int(count) Edge[count]
+
+Request:  UTF8("GetEdges") int(level)
+Response: int(count) Edge[count]
+
+Request:  UTF8("ChangeZoomLevel") double(zoom)
+Response: int(count) Edge[count]
