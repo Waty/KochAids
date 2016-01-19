@@ -1,4 +1,4 @@
-package com.waty.readers;
+package com.waty;
 
 import com.waty.calculate.Edge;
 import javafx.scene.paint.Color;
@@ -9,27 +9,24 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-public class BinaryMemoryMapped implements IReader {
+public class MemMappedReader implements AutoCloseable {
     private static final int READ_SIZE = 7 * Double.BYTES;
     private RandomAccessFile file;
     private MappedByteBuffer buffer;
     private FileChannel channel;
 
-    @Override
-    public void open(String path) throws IOException {
+    public MemMappedReader(String path) throws IOException {
         file = new RandomAccessFile(path, "r");
         channel = file.getChannel();
         buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
     }
 
-    @Override
     public int readLevel() throws IOException {
         try (FileLock ignored = channel.lock(0, Integer.BYTES, true)) {
             return buffer.getInt();
         }
     }
 
-    @Override
     public Edge readEdge() throws IOException {
         try (FileLock ignored = channel.lock(buffer.position(), READ_SIZE, true)) {
             double x1 = buffer.getDouble();

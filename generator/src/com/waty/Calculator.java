@@ -2,16 +2,16 @@ package com.waty;
 
 import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
-import com.waty.writers.IWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Calculator {
 
     public static final String PATH = "C:\\KochData\\";
-    private static final String FILE_NAME = "data";
+    private static final String FILE_NAME = "data.idk";
 
     public static String getPath(int idx) {
         String extension;
@@ -30,18 +30,10 @@ public class Calculator {
         kf.setLevel(lvl);
 
         System.out.println();
-        System.out.println("Which writer should be used?");
-        for (int i = 0; i < IWriter.writers.length; i++) {
-            System.out.printf("(%d) %s%n", i + 1, IWriter.writers[i].toString());
-        }
-        System.out.println();
 
-        int idx = s.nextInt() - 1;
-
-        String absPath = getPath(idx);
+        String absPath = Paths.get(PATH,FILE_NAME).toAbsolutePath().toString();
         System.out.println("Writing to file " + absPath);
-        try (final IWriter writer = IWriter.writers[idx]) {
-            writer.open(absPath);
+        try (MemMappedWriter writer = new MemMappedWriter(absPath)) {
             writer.setLevel(lvl);
             kf.addObserver((observable, o) -> {
                 try {

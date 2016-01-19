@@ -1,4 +1,4 @@
-package com.waty.writers;
+package com.waty;
 
 import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
@@ -9,7 +9,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-public class BinaryMemoryMapped implements IWriter {
+public class MemMappedWriter implements AutoCloseable {
     static final int WRITE_SIZE = Double.BYTES * 7;
 
     public long NUMBER_OF_BYTES;
@@ -17,12 +17,10 @@ public class BinaryMemoryMapped implements IWriter {
     private MappedByteBuffer out;
     private FileChannel fc;
 
-    @Override
-    public void open(String path) throws IOException {
+    public MemMappedWriter(String path) throws IOException {
         memoryMappedFile = new RandomAccessFile(path, "rwd");
     }
 
-    @Override
     public void setLevel(int lvl) throws IOException {
         KochFractal kf = new KochFractal();
         kf.setLevel(lvl);
@@ -37,7 +35,6 @@ public class BinaryMemoryMapped implements IWriter {
         }
     }
 
-    @Override
     public void appendEdge(Edge e) throws IOException {
         // the try is to make sure the lock is always released
         try (FileLock ignored = fc.lock(out.position(), WRITE_SIZE, false)) {

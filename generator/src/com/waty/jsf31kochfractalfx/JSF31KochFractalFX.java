@@ -5,12 +5,9 @@
 package com.waty.jsf31kochfractalfx;
 
 import com.waty.Calculator;
+import com.waty.MemMappedReader;
 import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
-import com.waty.readers.BinaryBuffered;
-import com.waty.readers.BinaryMemoryMapped;
-import com.waty.readers.IReader;
-import com.waty.readers.TextBuffered;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -170,17 +167,10 @@ public class JSF31KochFractalFX extends Application {
         fileWatcherThread.interrupt();
     }
 
-    IReader getReader(String path) {
-        if (path.endsWith(".txt")) return new TextBuffered();
-        else if (path.endsWith(".bin")) return new BinaryBuffered();
-        return new BinaryMemoryMapped();
-    }
-
     private void parseFile(String path) {
         clearKochPanel();
         new Thread(() -> {
-            try (IReader reader = getReader(path)) {
-                reader.open(path);
+            try (MemMappedReader reader = new MemMappedReader(path)) {
                 currentLevel = reader.readLevel();
                 Platform.runLater(() -> labelLevel.setText(currentLevel + ""));
 
