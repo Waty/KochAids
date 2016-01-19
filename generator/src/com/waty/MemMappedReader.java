@@ -9,8 +9,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
+import static com.waty.MemMappedWriter.*;
+
 public class MemMappedReader implements AutoCloseable {
-    private static final int READ_SIZE = 7 * Double.BYTES;
     private RandomAccessFile file;
     private MappedByteBuffer buffer;
     private FileChannel channel;
@@ -18,17 +19,36 @@ public class MemMappedReader implements AutoCloseable {
     public MemMappedReader(String path) throws IOException {
         file = new RandomAccessFile(path, "r");
         channel = file.getChannel();
-        buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+        long size = channel.size();
+        if (size < DATA_BEGIN_POS) size = DATA_BEGIN_POS;
+        buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, size);
+        buffer.position(DATA_BEGIN_POS);
     }
 
-    public int readLevel() throws IOException {
-        try (FileLock ignored = channel.lock(0, Integer.BYTES, true)) {
-            return buffer.getInt();
+    public int getLevel() throws IOException {
+        try (FileLock ignored = channel.lock(LEVEL_POS, Integer.BYTES, true)) {
+            int lvl = buffer.getInt(LEVEL_POS);
+            buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize(lvl));
+            buffer.position(DATA_BEGIN_POS);
+            return lvl;
+        }
+    }
+
+    public boolean canReadEdge() throws IOException {
+        try (FileLock ignored = channel.lock(MAX_READ_POS, Integer.SIZE, true)) {
+            return buffer.position() + WRITE_SIZE <= buffer.getInt(MAX_READ_POS);
         }
     }
 
     public Edge readEdge() throws IOException {
-        try (FileLock ignored = channel.lock(buffer.position(), READ_SIZE, true)) {
+        while (!canReadEdge()) {
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException ignored) {
+            }
+        }
+
+        try (FileLock ignored = channel.lock(buffer.position(), WRITE_SIZE, true)) {
             double x1 = buffer.getDouble();
             double y1 = buffer.getDouble();
             double x2 = buffer.getDouble();

@@ -171,7 +171,7 @@ public class JSF31KochFractalFX extends Application {
         clearKochPanel();
         new Thread(() -> {
             try (MemMappedReader reader = new MemMappedReader(path)) {
-                currentLevel = reader.readLevel();
+                currentLevel = reader.getLevel();
                 Platform.runLater(() -> labelLevel.setText(currentLevel + ""));
 
                 for (int i = 0; i < getEdgesCount(); i++) {
