@@ -3,7 +3,6 @@ package com.waty;
 import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Scanner;
@@ -12,15 +11,6 @@ public class Calculator {
 
     public static final String PATH = "C:\\KochData\\";
     private static final String FILE_NAME = "data.idk";
-
-    public static String getPath(int idx) {
-        String extension;
-        if (idx == 0 || idx == 2) extension = "txt";
-        else if (idx == 1 || idx == 3) extension = "bin";
-        else extension = "idk";
-
-        return new File(PATH + FILE_NAME + "." + extension).getAbsolutePath();
-    }
 
     public static void main(String[] args) {
         System.out.println("What lvl needs to be generated?\n");
@@ -31,7 +21,7 @@ public class Calculator {
 
         System.out.println();
 
-        String absPath = Paths.get(PATH,FILE_NAME).toAbsolutePath().toString();
+        String absPath = Paths.get(PATH, FILE_NAME).toAbsolutePath().toString();
         System.out.println("Writing to file " + absPath);
         try (MemMappedWriter writer = new MemMappedWriter(absPath)) {
             writer.setLevel(lvl);
