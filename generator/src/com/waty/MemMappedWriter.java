@@ -62,9 +62,15 @@ public class MemMappedWriter implements AutoCloseable {
         }
     }
 
+    /**
+     * closes all objects like it's supposed to, doesn't release the file: "A mapped byte buffer and the file mapping that it represents remain valid until the buffer itself is garbage-collected."
+     */
     @Override
     public void close() throws IOException {
         channel.close();
         file.close();
+
+        // try to get rid of the fileMapping
+        System.gc();
     }
 }
