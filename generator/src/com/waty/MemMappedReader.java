@@ -44,6 +44,7 @@ public class MemMappedReader implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
+        channel.close();
         file.close();
     }
 }
