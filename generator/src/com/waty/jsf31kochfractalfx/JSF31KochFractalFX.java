@@ -10,24 +10,17 @@ import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 
 /**
  * @author Nico Kuijpers
@@ -41,13 +34,13 @@ public class JSF31KochFractalFX extends Application {
     private double zoomTranslateY = 0.0;
     private double zoom = 1.0;
     // Current level of Koch fractal
-    private int currentLevel = 1;
+    private int currentLevel = 0;
     // Labels for level, nr edges, calculation time, and drawing time
     private Label labelLevel;
     // Koch panel and its size
     private Canvas kochPanel;
     private Stage primaryStage;
-    private Thread fileWatcherThread;
+    private Thread fileReaderThread;
 
     /**
      * The main() method is ignored in correctly deployed JavaFX application.
@@ -100,12 +93,6 @@ public class JSF31KochFractalFX extends Application {
         labelLevel = new Label("Level: " + currentLevel);
         grid.add(labelLevel, 0, 6);
 
-        // Button to fit Koch fractal in Koch panel
-        Button bLoadFile = new Button();
-        bLoadFile.setText("Load file");
-        bLoadFile.setOnAction(this::bLoadFileClicked);
-        grid.add(bLoadFile, 14, 6);
-
         // Create Koch manager and set initial level
         resetZoom();
 
@@ -121,80 +108,49 @@ public class JSF31KochFractalFX extends Application {
 
         clearKochPanel();
 
-
-        WatchService watcher = FileSystems.getDefault().newWatchService();
-        Path dir = Paths.get(Calculator.PATH);
-        dir.register(watcher, ENTRY_CREATE);
-
-        fileWatcherThread = new Thread(() -> {
-            while (true) {
-                WatchKey key;
-                try {
-                    // wait for a key to be available
-                    key = watcher.take();
-                } catch (InterruptedException ex) {
-                    return;
-                }
-
-                for (WatchEvent<?> event : key.pollEvents()) {
-                    // get event type
-                    WatchEvent.Kind<?> kind = event.kind();
-
-                    // get file name
-                    @SuppressWarnings("unchecked")
-                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
-
-                    String path = Paths.get(Calculator.PATH, ev.context().toString()).toString();
-                    System.out.println(kind.name() + ": " + path);
-                    if (kind == ENTRY_CREATE) {
-                        Platform.runLater(() -> parseFile(path));
+        fileReaderThread = new Thread(() -> {
+            try (MemMappedReader reader = new MemMappedReader(Calculator.PATH)) {
+                //noinspection InfiniteLoopStatement
+                while (true) {
+                    int level = reader.getLevel();
+                    if (level != currentLevel) {
+                        currentLevel = level;
+                        readFile(reader, level);
+                    } else {
+                        Thread.sleep(1);
                     }
                 }
-
-                // IMPORTANT: The key must be reset after processed
-                boolean valid = key.reset();
-                if (!valid) {
-                    break;
-                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
             }
         });
-        fileWatcherThread.start();
+        fileReaderThread.start();
+    }
+
+    private void readFile(MemMappedReader reader, int level) throws IOException {
+        System.out.println("reading lvl " + level);
+        // update ui
+        Platform.runLater(() -> {
+            clearKochPanel();
+            labelLevel.setText(level + "");
+        });
+
+        //reset position of the reader
+        reader.resetPosition();
+
+        //draw all edges
+        int edgesCount = getEdgesCount();
+        for (int i = 0; i < edgesCount; i++) {
+            System.out.println("reading edge #" + (i + 1) + "/" + edgesCount);
+            Edge edge = reader.readEdge();
+            Platform.runLater(() -> drawEdge(edge));
+        }
     }
 
     @Override
     public void stop() throws Exception {
         super.stop();
-        fileWatcherThread.interrupt();
-    }
-
-    private void parseFile(String path) {
-        clearKochPanel();
-        new Thread(() -> {
-            try (MemMappedReader reader = new MemMappedReader(path)) {
-                currentLevel = reader.getLevel();
-                Platform.runLater(() -> labelLevel.setText(currentLevel + ""));
-
-                for (int i = 0; i < getEdgesCount(); i++) {
-                    Edge edge = reader.readEdge();
-                    Platform.runLater(() -> drawEdge(edge));
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            //noinspection ResultOfMethodCallIgnored
-            new File(path).delete();
-        }).start();
-
-    }
-
-    private void bLoadFileClicked(ActionEvent actionEvent) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Please select the file");
-        File file = fileChooser.showOpenDialog(primaryStage);
-
-        parseFile(file.getPath());
+        fileReaderThread.interrupt();
     }
 
     public void clearKochPanel() {

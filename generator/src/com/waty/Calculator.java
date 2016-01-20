@@ -4,13 +4,11 @@ import com.waty.calculate.Edge;
 import com.waty.calculate.KochFractal;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Calculator {
 
-    public static final String PATH = "C:\\KochData\\";
-    private static final String FILE_NAME = "data.idk";
+    public static final String PATH = "C:\\KochData\\data.idk";
 
     public static void main(String[] args) {
         System.out.println("What lvl needs to be generated?\n");
@@ -21,9 +19,8 @@ public class Calculator {
 
         System.out.println();
 
-        String absPath = Paths.get(PATH, FILE_NAME).toAbsolutePath().toString();
-        System.out.println("Writing to file " + absPath);
-        try (MemMappedWriter writer = new MemMappedWriter(absPath)) {
+        System.out.println("Writing to file " + PATH);
+        try (MemMappedWriter writer = new MemMappedWriter(PATH)) {
             writer.setLevel(lvl);
             kf.addObserver((observable, o) -> {
                 try {

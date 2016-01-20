@@ -22,14 +22,19 @@ public class MemMappedReader implements AutoCloseable {
         long size = channel.size();
         if (size < DATA_BEGIN_POS) size = DATA_BEGIN_POS;
         buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, size);
-        buffer.position(DATA_BEGIN_POS);
+        resetPosition();
     }
 
     public int getLevel() throws IOException {
         try (FileLock ignored = channel.lock(LEVEL_POS, Integer.BYTES, true)) {
             int lvl = buffer.getInt(LEVEL_POS);
-            buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize(lvl));
-            buffer.position(DATA_BEGIN_POS);
+
+            // if the buffer is mapped to a too small size, remap it to a larger one
+            long fileSize = fileSize(lvl);
+            if (buffer.limit() < fileSize) {
+                buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
+                resetPosition();
+            }
             return lvl;
         }
     }
@@ -60,6 +65,10 @@ public class MemMappedReader implements AutoCloseable {
 
             return new Edge(x1, y1, x2, y2, new Color(red, green, blue, 1));
         }
+    }
+
+    public void resetPosition() {
+        buffer.position(DATA_BEGIN_POS);
     }
 
     /**
